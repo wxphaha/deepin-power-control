@@ -1,0 +1,8 @@
+wifi_threshold: 100     # KB/s
+wifi_multiplier: 3
+min_check_interval: 30   # second
+max_check_interval: 300  # second
+wifi_ignore_devices:
+  - "lo"
+  - "docker0"
+log_level: "info" # Change this to "info" for daily use

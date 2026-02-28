@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+# Explicitly set environments for Go build system
+export GOPATH := /usr/share/gocode
+export GOCACHE := /tmp/gocache
+export GO111MODULE := off
+
+# Standard Debhelper sequence
+%:
+	dh $@
+
+# Skip default dh_auto_build and use our Makefile
+override_dh_auto_build:
+	dh_auto_build -- LDFLAGS=""
+
+# Install artifacts using Makefile's install target
+override_dh_auto_install:
+	dh_auto_install -- DESTDIR=$(CURDIR)/debian/deepin-power-control
+
+# Post-build cleanup
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf gopath out
