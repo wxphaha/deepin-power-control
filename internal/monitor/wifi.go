@@ -61,7 +61,7 @@ func RunWifiEngine() error {
 	defer func() {
 		global.Info("WiFi monitor exiting. Restoring performance mode...")
 		if currentState != StateOff {
-			setPowerSave(getValidTargets(), "off")
+			_ = setPowerSave(getValidTargets(), "off")
 		}
 	}()
 

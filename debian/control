@@ -6,7 +6,7 @@ Build-Depends:
  debhelper (>= 11),
  debhelper-compat (= 11),
  golang-any,
- golang-github-spf13-cobra-dev,
+ golang-github-spf13-cobra-dev [!loongarch64],
  golang-gopkg-ini.v1-dev,
  golang-gopkg-yaml.v2-dev
 Standards-Version: 4.5.1

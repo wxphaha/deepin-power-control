@@ -67,7 +67,7 @@ func TestLogFormat(t *testing.T) {
 func TestInitLogFallback(t *testing.T) {
 	// We call InitLog to ensure it doesn't crash even if syslog is unavailable
 	// On many dev machines/containers, syslog might not be running
-	InitLog(true, "")
+	InitLog(true, false)
 
 	if internalLogger == nil {
 		t.Fatal("sysLogger should not be nil after InitLog")

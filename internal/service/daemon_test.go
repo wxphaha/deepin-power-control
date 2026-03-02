@@ -242,7 +242,7 @@ func TestStopDaemonize(t *testing.T) {
 				if !tt.pidValid {
 					pid = -1
 				}
-				ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0644)
+				ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
 			}
 
 			err := StopDaemonize()

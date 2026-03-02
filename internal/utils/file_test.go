@@ -24,8 +24,8 @@ func TestGetConfigFilesInDir(t *testing.T) {
 
 	for _, f := range filesToCreate {
 		path := filepath.Join(tmpDir, f)
-		os.MkdirAll(filepath.Dir(path), 0755)
-		ioutil.WriteFile(path, []byte(""), 0644)
+		os.MkdirAll(filepath.Dir(path), 0750)
+		ioutil.WriteFile(path, []byte(""), 0600)
 	}
 
 	files, err := GetConfigFilesInDir(tmpDir)

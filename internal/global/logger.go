@@ -26,7 +26,7 @@ var (
 	internalLogger *log.Logger
 )
 
-func InitLog(verbose bool, logPath string) {
+func InitLog(verbose bool, logToFile bool) {
 	var (
 		writers []io.Writer
 		err     error
@@ -34,11 +34,11 @@ func InitLog(verbose bool, logPath string) {
 		flags   int = 0
 	)
 
-	if logPath != "" {
-		dir := filepath.Dir(logPath)
-		_ = os.MkdirAll(dir, 0755)
+	if logToFile {
+		dir := filepath.Dir(DebugLogPath)
+		_ = os.MkdirAll(dir, 0750)
 
-		f, err = os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err = os.OpenFile(DebugLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 		}

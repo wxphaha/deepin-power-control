@@ -1,3 +1,10 @@
+deepin-power-control (0.2) unstable; urgency=medium
+
+  * support loongarch sw.
+  * Fix static code scanning errors.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Mon, 02 Mar 2026 17:50:40 +0800
+
 deepin-power-control (0.1) unstable; urgency=medium
 
   * Initial release.

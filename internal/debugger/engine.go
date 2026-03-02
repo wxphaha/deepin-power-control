@@ -361,7 +361,7 @@ func (e *Engine) isFinished(state *DebugState) bool {
 
 func (e *Engine) reboot(state *DebugState) error {
 	state.RebootRetryCount++
-	if state.RebootRetryCount > int(global.AppConfig.RebootRetryCount) {
+	if state.RebootRetryCount > global.AppConfig.RebootRetryCount {
 		e.finalize(state, fmt.Errorf("reboot safety limit exceeded"))
 		return nil
 	}

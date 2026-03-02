@@ -52,7 +52,7 @@ type DebugState struct {
 
 	// Results and Safety
 	FoundCulprits    []Culprit `json:"found_culprits"`
-	RebootRetryCount int       `json:"reboot_retry_count"`
+	RebootRetryCount uint      `json:"reboot_retry_count"`
 
 	// Minimization context (only used when Phase == "MINIMIZE")
 	MinCtx *MinContext `json:"min_ctx,omitempty"`
@@ -62,7 +62,7 @@ type DebugState struct {
 func (s *DebugState) Save() error {
 	dir := filepath.Dir(global.StateFile)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return err
 		}
 	}

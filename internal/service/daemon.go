@@ -25,7 +25,7 @@ var (
 	executable   = os.Executable
 	newListener  = net.Listen
 	writePIDFile = func(pid int) error {
-		return ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0644)
+		return ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
 	}
 	exitProcess = os.Exit
 	newDial     = net.Dial
@@ -111,7 +111,7 @@ func monitorShutdown(l net.Listener, cancel context.CancelFunc) {
 			if scanner.Scan() && scanner.Text() == "exit" {
 				socketChan <- true
 			}
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
@@ -126,7 +126,7 @@ func monitorShutdown(l net.Listener, cancel context.CancelFunc) {
 func isRunning() bool {
 	conn, err := newDial("unix", socketAddr)
 	if err == nil {
-		conn.Close()
+		_ = conn.Close()
 		return true
 	}
 	return false

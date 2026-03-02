@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -65,27 +66,14 @@ func RunCmdWithTimeout(timeout time.Duration, name string, arg ...string) error 
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			// Fill the standard library struct with captured stderr
 			exitErr.Stderr = errBuf.Bytes()
+			fullCmd := name + " " + strings.Join(arg, " ")
 			// Return our clearly named wrapper
 			return &CmdError{
-				Command: cmd.String(),
+				Command: fullCmd,
 				Cause:   exitErr,
 			}
 		}
 		return err
 	}
 	return nil
-}
-
-// RunSudoS executes a command with sudo -S, feeding the password via stdin.
-// This avoids using bash -c and handles commands safely.
-func RunSudoS(password string, name string, arg ...string) error {
-	// Prepend "sudo", "-S" to the arguments
-	args := append([]string{"-S", name}, arg...)
-	cmd := exec.Command("sudo", args...)
-
-	// Feed password to stdin
-	cmd.Stdin = bytes.NewBufferString(password + "\n")
-
-	// You can capture stderr here if you need to debug sudo failures
-	return cmd.Run()
 }

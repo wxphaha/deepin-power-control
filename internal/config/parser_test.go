@@ -50,7 +50,7 @@ func TestApplyModeLogic(t *testing.T) {
 
 	// 1. Base config (Global)
 	base := "WIFI_PWR=on\nCPU_SCALING=powersave"
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "00-base.conf"), []byte(base), 0644)
+	ioutil.WriteFile(filepath.Join(tmpRawDir, "00-base.conf"), []byte(base), 0600)
 
 	// 2. Mode config (Section-based)
 	mode := `
@@ -61,11 +61,11 @@ CPU_SCALING=performance
 [saving]
 WIFI_PWR=on
 `
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "10-mode.conf"), []byte(mode), 0644)
+	ioutil.WriteFile(filepath.Join(tmpRawDir, "10-mode.conf"), []byte(mode), 0600)
 
 	// 3. Override config (Filename-based for performance)
 	override := "CPU_MAX_PERF=80"
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "20_performance_custom.conf"), []byte(override), 0644)
+	ioutil.WriteFile(filepath.Join(tmpRawDir, "20_performance_custom.conf"), []byte(override), 0600)
 
 	// Execute merge for 'performance' mode
 	err := ApplyMode("performance")

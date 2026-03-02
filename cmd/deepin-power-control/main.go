@@ -17,7 +17,7 @@ var (
 	debugMode   bool
 	verboseMode bool
 	configPath  string
-	logPath     string
+	logToFile   bool
 
 	debugTarget string
 	debugExpect string
@@ -38,11 +38,11 @@ var rootCmd = &cobra.Command{
 	SilenceErrors: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		isDebugSubCmd := strings.Contains(cmd.CommandPath(), " debug")
-		if isDebugSubCmd && !cmd.Flags().Changed("logfile") {
-			logPath = global.DebugLogPath
+		if isDebugSubCmd && !cmd.Flags().Changed("logtofile") {
+			logToFile = true
 		}
 
-		global.InitLog(verboseMode, logPath)
+		global.InitLog(verboseMode, logToFile)
 		global.LoadConfig(configPath)
 		global.SetLogLevel(global.AppConfig.LogLevel)
 		if debugMode {
@@ -188,7 +188,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&debugMode, "debug", "d", false, "Enable debug logging")
 	rootCmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Show log in console")
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "/etc/deepin-power-control/config.yaml", "Path to config file")
-	rootCmd.PersistentFlags().StringVar(&logPath, "logfile", "", "Log to file instead of syslog")
+	rootCmd.PersistentFlags().BoolVar(&logToFile, "logtofile", false, "Log to file instead of syslog")
 
 	debugCmd.PersistentFlags().StringVar(&debugTarget, "target", "", "Path to sysfs file (e.g. /sys/bus/pci/...)")
 	debugCmd.PersistentFlags().StringVar(&debugExpect, "expect", "", "Expected value in the target file (e.g. 'auto')")

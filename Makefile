@@ -17,7 +17,7 @@ GOPKG_PREFIX = ${PKG_NAME}
 GOCMD = go
 
 # Hardening flags for distribution
-ifneq ($(DEB_BUILD_ARCH), mips64el)
+ifneq ($(filter $(DEB_BUILD_ARCH), amd64 arm64),)
     DSPC_GO_BUILD_OPTIONS += -buildmode=pie -ldflags '-linkmode=external -extldflags "-Wl,-z,noexecstack,-z,relro,-z,now"'
     DSPC_CGO_FLAGS += CGO_CFLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2 -O2 -ftrapv"
 endif
@@ -33,13 +33,21 @@ prepare:
 	@mkdir -p ${GOPATH_DIR}/src/$(dir ${GOPKG_PREFIX})
 	@ln -snf ../.. ${GOPATH_DIR}/src/${GOPKG_PREFIX}
 
+	@if [ "${DEB_BUILD_ARCH}" = "loongarch64" ] && [ -d "vendor" ]; then \
+		echo "> Linking dependencies from vendor..."; \
+		for author in $$(ls vendor/github.com/); do \
+			mkdir -p ${GOPATH_DIR}/src/github.com/$$author; \
+			ln -snf ${CURDIR}/vendor/github.com/$$author/* ${GOPATH_DIR}/src/github.com/$$author/; \
+		done \
+	fi
+
 fmt:
 	@echo "> Formatting code..."
 	env GOPATH="${CURDIR}/${GOPATH_DIR}:${GOPATH}" $(GOCMD) fmt ./...
 
 build: prepare out/${BINARY_NAME}
 
-out/${BINARY_NAME}:
+out/${BINARY_NAME}: prepare
 	@echo "> Compiling ${BINARY_NAME} binary..."
 	env GOPATH="${CURDIR}/${GOPATH_DIR}:${GOPATH}" ${DSPC_CGO_FLAGS} \
 	$(GOBUILD) -o out/${BINARY_NAME} ${DSPC_GO_BUILD_OPTIONS} ./cmd/${PKG_NAME}
