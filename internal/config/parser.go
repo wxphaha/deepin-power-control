@@ -115,7 +115,7 @@ func writeMergedConfig(mergedMap map[string]ConfigValue, mode string) error {
 		base := filepath.Base(f)
 		if strings.Contains(base, "deepin-system-power-control") || strings.Contains(base, "dspc") || strings.Contains(base, "deepin-power-control") {
 			global.Debug("Removing old config: %s", base)
-			if err := os.Remove(f); err != nil {
+			if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
 				// Key point: Deletion failure should be treated as an error, preventing subsequent writes.
 				return fmt.Errorf("failed to remove old config file %s: %w", f, err)
 			}

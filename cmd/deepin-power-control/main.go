@@ -9,6 +9,7 @@ import (
 	"deepin-power-control/internal/debugger"
 	"deepin-power-control/internal/global"
 	"deepin-power-control/internal/monitor"
+	"deepin-power-control/internal/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -68,6 +69,10 @@ var setCmd = &cobra.Command{
 		if err := checkRoot(); err != nil {
 			return err
 		}
+		if err := utils.LockTlp(); err != nil {
+			return err
+		}
+		defer utils.UnlockTlp()
 
 		mode := args[0]
 		global.Info("Applying power mode: %s", mode)
@@ -85,6 +90,10 @@ var initStartCmd = &cobra.Command{
 		if err := checkRoot(); err != nil {
 			return err
 		}
+		if err := utils.LockTlp(); err != nil {
+			return err
+		}
+		defer utils.UnlockTlp()
 
 		global.Info("Initializing TLP service...")
 		return config.InitStart()

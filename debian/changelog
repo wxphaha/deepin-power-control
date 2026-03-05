@@ -1,3 +1,9 @@
+deepin-power-control (0.3) unstable; urgency=medium
+
+  * Add filelock.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Wed, 04 Mar 2026 18:06:01 +0800
+
 deepin-power-control (0.2) unstable; urgency=medium
 
   * support loongarch sw.
