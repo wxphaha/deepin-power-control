@@ -2,7 +2,6 @@ package debugger
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -72,12 +71,12 @@ func (s *DebugState) Save() error {
 		return err
 	}
 
-	return ioutil.WriteFile(global.StateFile, data, 0644)
+	return os.WriteFile(global.StateFile, data, 0644)
 }
 
 // LoadState reads the state from global.StateFile.
 func LoadState() (*DebugState, error) {
-	data, err := ioutil.ReadFile(global.StateFile)
+	data, err := os.ReadFile(global.StateFile)
 	if err != nil {
 		return nil, err
 	}

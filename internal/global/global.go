@@ -1,7 +1,7 @@
 package global
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -86,7 +86,7 @@ func LoadConfig(path string) {
 	InitDefaultConfig()
 
 	// 2. Try to read file
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		// File missing, keep defaults
 		return

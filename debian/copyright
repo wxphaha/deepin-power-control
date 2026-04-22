@@ -6,12 +6,6 @@ Files: *
 Copyright: 2025-2026 Uniontech Software Technology Co.,Ltd
 License: GPL-3.0-or-later
 
-Files: vendor/github.com/spf13/cobra/*
-       vendor/gopkg.in/ini.v1/*
-       vendor/gopkg.in/yaml.v2/*
-Copyright: Various Authors
-License: Apache-2.0
-
 Files: debian/*
 Copyright: 2026 Uniontech Software Technology Co.,Ltd
 License: GPL-3.0-or-later

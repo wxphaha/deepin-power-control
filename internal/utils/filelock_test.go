@@ -1,16 +1,13 @@
 package utils
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestFileLockClass(t *testing.T) {
-	tmpDir, _ := ioutil.TempDir("", "lock_test")
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	lockPath := filepath.Join(tmpDir, "business.lock")
 	l1 := NewFileLock(lockPath, 1*time.Second)

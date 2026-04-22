@@ -3,7 +3,6 @@ package debugger
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -41,7 +40,7 @@ type SysfsProbe struct {
 
 func (p *SysfsProbe) Check() error {
 	// Read raw data from the specified path
-	data, err := ioutil.ReadFile(p.Path)
+	data, err := os.ReadFile(p.Path)
 	if err != nil {
 		return fmt.Errorf("sysfs probe error: failed to read path %s: %v", p.Path, err)
 	}

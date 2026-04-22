@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
 	"sort"
@@ -51,4 +52,27 @@ func GetConfigFilesInDir(baseDir string) ([]string, error) {
 	})
 
 	return files, nil
+}
+
+// Internal helper to check if a path is a directory
+func IsDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+// Internal helper to check if a file contains a specific string (efficiently)
+func FileContains(path, target string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), target) {
+			return true
+		}
+	}
+	return false
 }

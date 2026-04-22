@@ -1,3 +1,10 @@
+deepin-power-control (2.0.1) unstable; urgency=medium
+
+  * Fix EPP setting via override@epp profile.
+  * reorganize and optimize TLP configuration file.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Wed, 22 Apr 2026 17:38:51 +0800
+
 deepin-power-control (1.0.1) unstable; urgency=medium
 
   * Add license.

@@ -5,7 +5,6 @@ import (
 	"context"
 	"deepin-power-control/internal/global"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -25,7 +24,7 @@ var (
 	executable   = os.Executable
 	newListener  = net.Listen
 	writePIDFile = func(pid int) error {
-		return ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
+		return os.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
 	}
 	exitProcess = os.Exit
 	newDial     = net.Dial
@@ -138,7 +137,7 @@ func StopDaemonize() error {
 	}
 
 	// Fallback to PID kill
-	pidData, err := ioutil.ReadFile(global.PidFile)
+	pidData, err := os.ReadFile(global.PidFile)
 	if err != nil {
 		global.Info("no daemon process found")
 		return nil

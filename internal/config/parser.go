@@ -25,62 +25,90 @@ type ConfigValue struct {
 func ApplyMode(mode string) error {
 	global.Info("Starting configuration merge for mode: %s", mode)
 
-	// 1. Collect and sort all .conf files
+	// 1. Scan and retrieve all configuration files
 	files, err := utils.GetConfigFilesInDir(global.RawConfigDir)
 	if err != nil {
-		return fmt.Errorf("scan failed: %w", err)
+		return fmt.Errorf("configuration scan failed: %w", err)
 	}
+
 	mergedMap := make(map[string]ConfigValue)
 
-	// 2. Process each file
+	// 2. Iterate through files and merge content
 	for _, file := range files {
-		fileName := filepath.Base(file)
-		cfg, err := ini.Load(file)
-		if err != nil {
-			global.Warn("Failed to load %s: %v", file, err)
+		if err := processSingleFile(file, mode, mergedMap); err != nil {
+			global.Warn("Skipping file %s: %v", file, err)
 			continue
-		}
-
-		// Check if the file has any sections other than DEFAULT
-		sections := cfg.SectionStrings()
-		hasSections := false
-		for _, s := range sections {
-			if s != "" && s != "DEFAULT" {
-				hasSections = true
-				break
-			}
-		}
-
-		if hasSections {
-			// Format A: Use [section] matching the mode
-			global.Debug("File %s: Section-based format detected", fileName)
-			// Always pick global keys first (if any)
-			mergeSection(cfg.Section(""), fileName, mergedMap)
-			// Then pick the keys from the specific mode section
-			sec, err := cfg.GetSection(mode)
-			if err == nil && len(sec.Keys()) > 0 {
-				mergeSection(sec, fileName, mergedMap)
-			}
-		} else {
-			// Format B: Filename-based or Global
-			global.Debug("File %s: No sections detected, checking filename...", fileName)
-			targetModeInName := getModeFromFilename(fileName)
-
-			switch targetModeInName {
-			case "":
-				// Pure global file, no mode in filename
-				mergeSection(cfg.Section(""), fileName, mergedMap)
-			case mode:
-				// Mode in filename matches current mode
-				mergeSection(cfg.Section(""), fileName, mergedMap)
-			default:
-				// Mode in filename does NOT match
-				global.Debug("Skipping file %s (mode mismatch: %s != %s)", fileName, targetModeInName, mode)
-			}
 		}
 	}
 
+	// 3. Persist the merged configuration to TLP directory
 	return writeMergedConfig(mergedMap, mode)
+}
+
+// processSingleFile handles the logic for a single configuration file
+func processSingleFile(path string, mode string, mergedMap map[string]ConfigValue) error {
+	fileName := filepath.Base(path)
+
+	// Step A: Hardware feature check (The Interceptor)
+	if !shouldApplyFile(fileName) {
+		global.Debug("File %s skipped: Hardware feature not supported", fileName)
+		return nil
+	}
+
+	// Step B: Load INI content
+	cfg, err := ini.Load(path)
+	if err != nil {
+		return fmt.Errorf("load failed: %v", err)
+	}
+
+	// Step C: Determine format and merge
+	if hasSections(cfg) {
+		// Format A: Section-based ([DEFAULT] + [mode])
+		global.Debug("File %s: Section-based format detected", fileName)
+		mergeSection(cfg.Section(""), fileName, mergedMap)
+		if sec, err := cfg.GetSection(mode); err == nil {
+			mergeSection(sec, fileName, mergedMap)
+		}
+	} else {
+		// Format B: Filename-based or Global
+		global.Debug("File %s: No sections detected, checking filename...", fileName)
+		targetMode := getModeFromFilename(fileName)
+		if targetMode == "" || targetMode == mode {
+			mergeSection(cfg.Section(""), fileName, mergedMap)
+		} else {
+			global.Debug("File %s skipped: Mode mismatch (%s != %s)", fileName, targetMode, mode)
+		}
+	}
+
+	return nil
+}
+
+// shouldApplyFile parses the @feature tag and checks hardware compatibility
+func shouldApplyFile(fileName string) bool {
+	// Pattern: filename@feature.conf
+	if !strings.Contains(fileName, "@") {
+		return true
+	}
+
+	// Extract feature name between '@' and '.conf'
+	parts := strings.Split(fileName, "@")
+	if len(parts) < 2 {
+		return true
+	}
+	featurePart := strings.TrimSuffix(parts[1], ".conf")
+
+	// Consult the feature registry
+	if checkFunc, ok := FeatureChecks[featurePart]; ok {
+		return checkFunc()
+	}
+
+	global.Warn("Unknown feature tag [@%s] in file %s", featurePart, fileName)
+	return false
+}
+
+// hasSections checks if the INI file contains any non-default sections
+func hasSections(cfg *ini.File) bool {
+	return len(cfg.Sections()) > 1
 }
 
 // getModeFromFilename extracts mode from name like "xxx_performance.conf" "xxx-performance.conf" "performance.conf"
@@ -182,6 +210,7 @@ func writeMergedConfig(mergedMap map[string]ConfigValue, mode string) error {
 			_, _ = writer.WriteString(fmt.Sprintf("# [%s]\n", sec))
 
 			keys := hierarchy[src][sec]
+			sort.Strings(keys)
 			for _, k := range keys {
 				_, _ = writer.WriteString(fmt.Sprintf("%s=%s\n", k, mergedMap[k].Value))
 			}

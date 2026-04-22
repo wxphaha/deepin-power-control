@@ -68,6 +68,10 @@ install:
 		find ${DESTDIR}${SHARE_DIR}/configs -type f -exec chmod 644 {} +; \
 	fi
 
+	# 3. Install config.yaml
+	mkdir -p ${DESTDIR}${CONF_DIR}
+	install -m 644 configs/sample.yaml ${DESTDIR}${CONF_DIR}/config.yaml
+
 clean:
 	@echo "> Cleaning up..."
 	@rm -rf out/*

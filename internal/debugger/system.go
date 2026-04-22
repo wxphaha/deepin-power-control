@@ -2,7 +2,6 @@ package debugger
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -38,7 +37,7 @@ WantedBy=graphical.target
 `, execPath)
 
 	// 1. Write the service file
-	if err := ioutil.WriteFile(global.SystemdServicePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(global.SystemdServicePath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to create systemd service: %w", err)
 	}
 

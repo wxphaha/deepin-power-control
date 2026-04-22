@@ -1,7 +1,7 @@
 package global
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -39,7 +39,7 @@ func TestLogLevel_UnmarshalYAML(t *testing.T) {
 			// We can test LoadConfig with a temporary file to trigger this
 			tmpFile := filepath.Join(t.TempDir(), "config.yaml")
 			content := "log_level: " + tt.yamlData
-			ioutil.WriteFile(tmpFile, []byte(content), 0600)
+			os.WriteFile(tmpFile, []byte(content), 0600)
 
 			LoadConfig(tmpFile)
 			if AppConfig.LogLevel != tt.expected {
@@ -61,7 +61,7 @@ max_check_interval: 30
 wifi_multiplier: 0
 `
 		confPath := filepath.Join(tmpDir, "invalid_val.yaml")
-		ioutil.WriteFile(confPath, []byte(content), 0600)
+		os.WriteFile(confPath, []byte(content), 0600)
 
 		LoadConfig(confPath)
 
@@ -76,7 +76,7 @@ wifi_multiplier: 0
 	t.Run("Zero Threshold", func(t *testing.T) {
 		content := "wifi_threshold: 0"
 		confPath := filepath.Join(tmpDir, "zero_thresh.yaml")
-		ioutil.WriteFile(confPath, []byte(content), 0600)
+		os.WriteFile(confPath, []byte(content), 0600)
 
 		LoadConfig(confPath)
 

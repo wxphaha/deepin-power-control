@@ -1,11 +1,8 @@
 package config
 
 import (
-	"bufio"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"deepin-power-control/internal/global"
@@ -23,6 +20,7 @@ func TestGetModeFromFilename(t *testing.T) {
 		{"xx-saving_mode.conf", "saving"},
 		{"lowbat.conf", "lowbat"},
 		{"xx_balance_config.conf", "balance"},
+		{"30-cpu@epp.conf", ""}, // Feature tags shouldn't interfere with mode extraction
 	}
 
 	for _, tt := range tests {
@@ -37,70 +35,80 @@ func TestGetModeFromFilename(t *testing.T) {
 
 // TestApplyModeLogic simulates the full merge process including section-based
 // and filename-based overriding.
-func TestApplyModeLogic(t *testing.T) {
-	// Setup temporary environment
-	tmpRawDir := t.TempDir()
-	tmpTlpDir := t.TempDir()
-	targetFile := filepath.Join(tmpTlpDir, "30_dspc_test_performance.conf")
+// TestApplyModeWithTestdata verifies the merge logic using external configuration files.
+// It simulates a real-world scenario by loading inputs from testdata/inputs/
+// and comparing the result with testdata/performance.golden.
+func TestApplyModeWithTestdata(t *testing.T) {
+	// 1. Setup temporary environment
+	tmpRawDir := "./debug_raw"
+	tmpTlpDir := "./debug_tlp"
+	os.MkdirAll(tmpRawDir, 0755)
+	os.MkdirAll(tmpTlpDir, 0755)
+	defer os.RemoveAll(tmpRawDir)
+	defer os.RemoveAll(tmpTlpDir)
 
-	// Inject test paths into global variables
 	global.RawConfigDir = tmpRawDir
 	global.TlpConfigDir = tmpTlpDir
-	global.TargetTlpFilePrefix = "30_dspc_test"
+	global.TargetTlpFilePrefix = "dspc_test"
 
-	// 1. Base config (Global)
-	base := "WIFI_PWR=on\nCPU_SCALING=powersave"
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "00-base.conf"), []byte(base), 0600)
-
-	// 2. Mode config (Section-based)
-	mode := `
-CPU_SCALING=balance
-[performance]
-WIFI_PWR=off
-CPU_SCALING=performance
-[saving]
-WIFI_PWR=on
-`
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "10-mode.conf"), []byte(mode), 0600)
-
-	// 3. Override config (Filename-based for performance)
-	override := "CPU_MAX_PERF=80"
-	ioutil.WriteFile(filepath.Join(tmpRawDir, "20_performance_custom.conf"), []byte(override), 0600)
-
-	// Execute merge for 'performance' mode
-	err := ApplyMode("performance")
-	if err != nil {
-		t.Fatalf("ApplyMode failed: %v", err)
+	// 2. Mock Hardware Feature Registry
+	oldChecks := FeatureChecks
+	defer func() { FeatureChecks = oldChecks }()
+	FeatureChecks = map[string]func() bool{
+		"supported": func() bool { return true },
+		"ignored":   func() bool { return false },
 	}
 
-	// Verify the content of the generated file
-	content, err := os.Open(targetFile)
+	// 3. Copy input files from testdata/inputs to the temporary RawConfigDir
+	inputSrcDir := filepath.Join("testdata", "inputs")
+	inputFiles, err := os.ReadDir(inputSrcDir)
 	if err != nil {
-		t.Fatalf("Could not open target file: %v", err)
+		t.Fatalf("Failed to read testdata/inputs: %v", err)
 	}
-	defer content.Close()
 
-	results := make(map[string]string)
-	scanner := bufio.NewScanner(content)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "=") {
-			kv := strings.Split(line, "=")
-			results[kv[0]] = kv[1]
+	for _, file := range inputFiles {
+		srcPath := filepath.Join(inputSrcDir, file.Name())
+		destPath := filepath.Join(tmpRawDir, file.Name())
+
+		content, err := os.ReadFile(srcPath)
+		if err != nil {
+			t.Fatalf("Failed to read input file %s: %v", srcPath, err)
+		}
+		if err := os.WriteFile(destPath, content, 0644); err != nil {
+			t.Fatalf("Failed to copy input file to tmp dir: %v", err)
 		}
 	}
 
-	// Assertions for 'performance' mode
-	// WIFI_PWR should be 'off' from [performance] section in 10-mode.conf
-	if results["WIFI_PWR"] != "off" {
-		t.Errorf("WIFI_PWR mismatch: got %s, want off", results["WIFI_PWR"])
+	// 4. Execute the merge logic for 'performance' mode
+	mode := "performance"
+	if err := ApplyMode(mode); err != nil {
+		t.Fatalf("ApplyMode failed: %v", err)
 	}
-	// CPU_SCALING should be 'performance' from [performance] section
-	if results["CPU_SCALING"] != "performance" {
-		t.Errorf("CPU_SCALING mismatch: got %s, want performance", results["CPU_SCALING"])
+
+	// 5. Golden File Comparison
+	generatedFile := filepath.Join(tmpTlpDir, "dspc_test_performance.conf")
+	got, err := os.ReadFile(generatedFile)
+	if err != nil {
+		t.Fatalf("Failed to read generated file: %v", err)
 	}
-	// CPU_MAX_PERF should be '80' from 20_performance_custom.conf
-	if results["CPU_MAX_PERF"] != "80" {
-		t.Errorf("CPU_MAX_PERF mismatch: got %s, want 80", results["CPU_MAX_PERF"])
+
+	goldenPath := filepath.Join("testdata", "performance.golden")
+
+	// Support automatic updates: UPDATE_GOLDEN=true go test -v ./internal/config
+	if os.Getenv("UPDATE_GOLDEN") == "true" {
+		if err := os.WriteFile(goldenPath, got, 0644); err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	want, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("Golden file missing. Run with UPDATE_GOLDEN=true to create it: %v", err)
+	}
+
+	if string(got) != string(want) {
+		t.Errorf("Full output mismatch!\nCheck the difference between %s and %s", generatedFile, goldenPath)
 	}
 }

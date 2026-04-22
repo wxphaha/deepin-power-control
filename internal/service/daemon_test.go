@@ -5,7 +5,6 @@ package service
 import (
 	"deepin-power-control/internal/global"
 	"errors"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -242,7 +241,7 @@ func TestStopDaemonize(t *testing.T) {
 				if !tt.pidValid {
 					pid = -1
 				}
-				ioutil.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
+				os.WriteFile(global.PidFile, []byte(strconv.Itoa(pid)), 0600)
 			}
 
 			err := StopDaemonize()
