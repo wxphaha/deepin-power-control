@@ -1,3 +1,14 @@
+deepin-power-control (2.0.2) unstable; urgency=medium
+
+  * Set RUNTIME_PM_ON_AC/BAT=on as global default across all modes
+  * Add RUNTIME_PM_DRIVER_DENYLIST for xhci_pci and xhci_hcd controllers
+  * Add RUNTIME_PM_BLACKLIST="00:12.0" for Zhaoxin xHCI controller
+  * Disable WOL wake by default on laptops (15-wol@portable.conf)
+  * Enable WOL wake by default on desktops
+  * Add hardware feature detection (portable, Zhaoxin, EPP support) 
+
+ -- zengwei <zengwei1@uniontech.com>  Thu, 11 Jun 2026 16:08:31 +0800
+
 deepin-power-control (2.0.1) unstable; urgency=medium
 
   * Fix EPP setting via override@epp profile.

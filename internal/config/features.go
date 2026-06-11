@@ -1,27 +1,42 @@
 package config
 
 import (
+	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
+	"deepin-power-control/internal/global"
 	"deepin-power-control/internal/utils"
 )
 
 // FeatureChecks maps filename tags (like "epp") to their detection functions.
 var FeatureChecks = map[string]func() bool{
-	"epp": CheckEppSupport,
-	// You can easily add more here, e.g., "nv" : CheckNvidiaGpu
+	"epp":      CheckEppSupport,
+	"portable": CheckPortable,
+	"zhaoxin":  CheckZhaoxin,
 }
 
 // Internal paths for hardware detection.
 // Defined as variables instead of constants to allow override during unit tests.
 var (
+	pathChassisType = "/sys/class/dmi/id/chassis_type"
 	pathEppAvailable = "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_available_preferences"
 	pathIntelPstate  = "/sys/devices/system/cpu/intel_pstate"
 	pathCpuInfo      = "/proc/cpuinfo"
 	pathAmdPstate    = "/sys/devices/system/cpu/amd_pstate"
 	pathAmdStatus    = "/sys/devices/system/cpu/amd_pstate/status"
 )
+
+// portableChassisTypes are chassis type values that indicate portable/laptop devices.
+// Reference: SMBIOS specification 3.5, Table 9.
+var portableChassisTypes = map[int]bool{
+	8:  true, // Portable
+	9:  true, // Laptop
+	10: true, // Notebook
+	11: true, // Hand Held
+	14: true, // Sub Notebook
+}
 
 // CheckEppSupport determines if the CPU supports Energy Performance Preference (EPP).
 func CheckEppSupport() bool {
@@ -46,4 +61,30 @@ func CheckEppSupport() bool {
 	}
 
 	return false
+}
+
+// CheckPortable determines if the machine is a portable device (laptop/tablet).
+// Returns true on detection failure (fail-safe: assume portable to disable WOL).
+func CheckPortable() bool {
+	data, err := ioutil.ReadFile(pathChassisType)
+	if err != nil {
+		global.Warn("Failed to read chassis_type: %v, assuming portable", err)
+		return true
+	}
+
+	chassisType, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		global.Warn("Failed to parse chassis_type: %v, assuming portable", err)
+		return true
+	}
+
+	isPortable := portableChassisTypes[chassisType]
+	global.Debug("Chassis type: %d, portable: %v", chassisType, isPortable)
+	return isPortable
+}
+
+// CheckZhaoxin detects Zhaoxin CPUs by checking vendor_id in /proc/cpuinfo.
+// Zhaoxin CPUs report vendor_id as "Shanghai" or "CentaurHauls".
+func CheckZhaoxin() bool {
+	return utils.FileContains(pathCpuInfo, "Shanghai") || utils.FileContains(pathCpuInfo, "CentaurHauls")
 }
