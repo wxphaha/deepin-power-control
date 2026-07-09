@@ -8,6 +8,71 @@ import (
 	"deepin-power-control/internal/global"
 )
 
+// TestShouldApplyFileWithPciTag verifies the dynamic @pci: feature tag handling.
+func TestShouldApplyFileWithPciTag(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Mock PCI devices path
+	oldPath := pathPciDevices
+	defer func() { pathPciDevices = oldPath }()
+	pathPciDevices = tmpDir
+
+	// Create a mock PCI device
+	devPath := filepath.Join(tmpDir, "0000:01:00.0")
+	os.MkdirAll(devPath, 0755)
+	os.WriteFile(filepath.Join(devPath, "vendor"), []byte("0x1002\n"), 0644)
+	os.WriteFile(filepath.Join(devPath, "device"), []byte("0x699f\n"), 0644)
+
+	tests := []struct {
+		name     string
+		fileName string
+		expected bool
+	}{
+		{
+			name:     "Matching PCI device",
+			fileName: "15-amd-gpu-dpm@pci:1002:699f.conf",
+			expected: true,
+		},
+		{
+			name:     "Non-matching PCI device",
+			fileName: "15-nvidia@pci:10de:1234.conf",
+			expected: false,
+		},
+		{
+			name:     "No feature tag",
+			fileName: "00-base.conf",
+			expected: true,
+		},
+		{
+			name:     "Static feature tag - supported",
+			fileName: "20-epp@supported.conf",
+			expected: true,
+		},
+		{
+			name:     "Static feature tag - ignored",
+			fileName: "20-epp@ignored.conf",
+			expected: false,
+		},
+	}
+
+	// Mock static feature checks for the non-PCI tests
+	oldChecks := FeatureChecks
+	defer func() { FeatureChecks = oldChecks }()
+	FeatureChecks = map[string]func() bool{
+		"supported": func() bool { return true },
+		"ignored":   func() bool { return false },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := shouldApplyFile(tt.fileName)
+			if got != tt.expected {
+				t.Errorf("shouldApplyFile(%q) = %v, want %v", tt.fileName, got, tt.expected)
+			}
+		})
+	}
+}
+
 // TestGetModeFromFilename checks the filename-based mode extraction
 func TestGetModeFromFilename(t *testing.T) {
 	tests := []struct {

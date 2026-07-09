@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -20,12 +21,13 @@ var FeatureChecks = map[string]func() bool{
 // Internal paths for hardware detection.
 // Defined as variables instead of constants to allow override during unit tests.
 var (
-	pathChassisType = "/sys/class/dmi/id/chassis_type"
+	pathChassisType  = "/sys/class/dmi/id/chassis_type"
 	pathEppAvailable = "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_available_preferences"
 	pathIntelPstate  = "/sys/devices/system/cpu/intel_pstate"
 	pathCpuInfo      = "/proc/cpuinfo"
 	pathAmdPstate    = "/sys/devices/system/cpu/amd_pstate"
 	pathAmdStatus    = "/sys/devices/system/cpu/amd_pstate/status"
+	pathPciDevices   = "/sys/bus/pci/devices"
 )
 
 // portableChassisTypes are chassis type values that indicate portable/laptop devices.
@@ -87,4 +89,51 @@ func CheckPortable() bool {
 // Zhaoxin CPUs report vendor_id as "Shanghai" or "CentaurHauls".
 func CheckZhaoxin() bool {
 	return utils.FileContains(pathCpuInfo, "Shanghai") || utils.FileContains(pathCpuInfo, "CentaurHauls")
+}
+
+// CheckPciDevice checks if a PCI device with the given vendor:device ID exists.
+// The pciID should be in "vendor:device" format (e.g. "1002:699f").
+func CheckPciDevice(pciID string) bool {
+	entries, err := os.ReadDir(pathPciDevices)
+	if err != nil {
+		global.Warn("Failed to read PCI devices directory: %v", err)
+		return false
+	}
+
+	pciID = strings.ToLower(pciID)
+	parts := strings.SplitN(pciID, ":", 2)
+	if len(parts) != 2 {
+		global.Warn("Invalid PCI ID format: %s (expected vendor:device)", pciID)
+		return false
+	}
+	targetVendor, targetDevice := parts[0], parts[1]
+
+	for _, entry := range entries {
+		devPath := filepath.Join(pathPciDevices, entry.Name())
+
+		vendor, err := os.ReadFile(filepath.Join(devPath, "vendor"))
+		if err != nil {
+			continue
+		}
+		device, err := os.ReadFile(filepath.Join(devPath, "device"))
+		if err != nil {
+			continue
+		}
+
+		// sysfs vendor/device files are formatted as "0x1002\n"
+		vendorStr := strings.ToLower(strings.TrimSpace(string(vendor)))
+		deviceStr := strings.ToLower(strings.TrimSpace(string(device)))
+
+		// Strip "0x" prefix if present
+		vendorStr = strings.TrimPrefix(vendorStr, "0x")
+		deviceStr = strings.TrimPrefix(deviceStr, "0x")
+
+		if vendorStr == targetVendor && deviceStr == targetDevice {
+			global.Debug("Found PCI device %s:%s at %s", targetVendor, targetDevice, entry.Name())
+			return true
+		}
+	}
+
+	global.Debug("PCI device %s not found", pciID)
+	return false
 }

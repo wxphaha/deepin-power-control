@@ -97,6 +97,12 @@ func shouldApplyFile(fileName string) bool {
 	}
 	featurePart := strings.TrimSuffix(parts[1], ".conf")
 
+	// Support dynamic pci: prefix for PCI device matching (e.g. @pci:1002:699f)
+	if strings.HasPrefix(featurePart, "pci:") {
+		pciID := strings.TrimPrefix(featurePart, "pci:")
+		return CheckPciDevice(pciID)
+	}
+
 	// Consult the feature registry
 	if checkFunc, ok := FeatureChecks[featurePart]; ok {
 		return checkFunc()

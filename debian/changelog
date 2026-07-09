@@ -1,3 +1,11 @@
+deepin-power-control (2.0.3) unstable; urgency=medium
+
+  * Add PCI device detection support (CheckPciDevice)
+  * Add dynamic @pci: feature tag for config files (e.g. @pci:1002:699f)
+  * Add unit tests for PCI device detection and feature tag parsing
+
+ -- zengwei <zengwei1@uniontech.com>  Wed, 09 Jul 2026 10:00:00 +0800
+
 deepin-power-control (2.0.2) unstable; urgency=medium
 
   * Set RUNTIME_PM_ON_AC/BAT=on as global default across all modes
