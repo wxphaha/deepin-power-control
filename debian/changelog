@@ -1,3 +1,9 @@
+deepin-power-control (2.0.4) unstable; urgency=medium
+
+  *Add dynamic @pci: feature tag for config files (e.g. @pci:1002:6611) 
+
+ -- zengwei <zengwei1@uniontech.com>  Thu, 16 Jul 2026 14:21:22 +0800
+
 deepin-power-control (2.0.3) unstable; urgency=medium
 
   * Add PCI device detection support (CheckPciDevice)
