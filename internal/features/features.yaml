@@ -1,0 +1,53 @@
+# Feature detection declarations (configuration-driven).
+#
+# Each feature declares HOW to detect a hardware capability. The engine
+# evaluates these declarations; no code change is needed to add a feature
+# that fits one of the declared types. Complex detection that cannot be
+# expressed here is handled by the legacy code registry (fallback).
+#
+# Declared types:
+#   file_value_in     - read file, trim, true if value in "values"
+#   file_contains     - read file, true if it contains any of "contains"
+#   path_exists       - true if the path exists (file or dir)
+#   dir_exists        - true if the path is a directory
+#   any               - true if any sub-condition is true
+#   all               - true if all sub-conditions are true
+#   pci_vendor_device - parameterized: matched as "pci:vendor:device"
+#                       (e.g. "pci:1002:699f"); the parameter is checked
+#                       against /sys/bus/pci/devices at match time, so OEM
+#                       configs can express any device without adding a
+#                       declaration here.
+#
+# on_error: value returned when the file cannot be read (default false).
+
+features:
+  portable:
+    type: file_value_in
+    path: /sys/class/dmi/id/chassis_type
+    values: ["8", "9", "10", "11", "14"]
+    on_error: true
+  zhaoxin:
+    type: file_contains
+    path: /proc/cpuinfo
+    contains: ["Shanghai", "CentaurHauls"]
+  epp:
+    type: any
+    conditions:
+      - type: path_exists
+        path: /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_available_preferences
+      - type: all
+        conditions:
+          - type: dir_exists
+            path: /sys/devices/system/cpu/intel_pstate
+          - type: file_contains
+            path: /proc/cpuinfo
+            contains: ["hwp_epp"]
+      - type: all
+        conditions:
+          - type: dir_exists
+            path: /sys/devices/system/cpu/amd_pstate
+          - type: file_value_in
+            path: /sys/devices/system/cpu/amd_pstate/status
+            values: ["active"]
+  pci:
+    type: pci_vendor_device

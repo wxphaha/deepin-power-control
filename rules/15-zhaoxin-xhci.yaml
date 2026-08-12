@@ -1,0 +1,6 @@
+# Zhaoxin platform xHCI controller Runtime PM exclusion.
+# Migrated from configs/override/15-zhaoxin-xhci@zhaoxin.conf.
+- match:
+    feature: zhaoxin
+  config:
+    RUNTIME_PM_BLACKLIST: '"00:12.0"'

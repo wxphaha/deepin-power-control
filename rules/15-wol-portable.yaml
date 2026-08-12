@@ -1,0 +1,6 @@
+# Portable devices (laptop/tablet) disable WOL by default.
+# Migrated from configs/override/15-wol@portable.conf.
+- match:
+    feature: portable
+  config:
+    WOL_DISABLE: Y

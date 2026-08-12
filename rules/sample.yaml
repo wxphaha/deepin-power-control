@@ -1,0 +1,57 @@
+# deepin-power-control rule file example (sample)
+#
+# Rule engine: a rule executes when its conditions match. No override,
+# no merge (udev-like semantics) - except config actions, which are merged
+# into the TLP configuration (later rules override earlier ones).
+#   - Fields within match are ANDed: mode AND feature must all match
+#   - Lists within a field are ORed: mode: [balance, saving] matches either
+#   - Omitted fields are unrestricted
+#
+# feature conditions accept three forms:
+#   feature: portable                                   - single feature
+#   feature: [portable, zhaoxin]                        - multiple (OR)
+#   feature: {pci: ["1002:6611"]}         - feature with
+#     parameters (OR within the list). Parameterized features carry their
+#     arguments at match time, so OEM configs can express any value
+#     without touching the compiled features.yaml.
+#   feature: {pci: ["1002:6611"], portable} - mixed: parameterized
+#     and bare features in one map (OR between keys, OR within parameters).
+#     A bare key (no value) is equivalent to a parameterless feature.
+#
+# Action types:
+#   write: write a value to sysfs. Path supports glob (e.g. devfreq*/governor);
+#          every match is written, then verified by reading back.
+#          Only paths under /sys/ are allowed.
+#   exec:  run a program. The command never goes through a shell; it is parsed
+#          into argv and executed directly. For pipes/redirection write the
+#          command explicitly as /bin/sh -c '...'
+#   config: generate a TLP config fragment (key=value). Merged AFTER the
+#          filesystem configs, so rules override them; no [mode] section is
+#          needed because match.mode already decides the mode. Prefer this
+#          over write when the target is expressible as a TLP item.
+#
+# File ordering: numeric prefix + directory depth decide execution order
+# (loaded earlier = executed earlier). OEM packages may drop files under
+# oem/ (executed last).
+# A file may contain multiple rules; each rule = match + single action.
+
+# Balance mode: set devfreq governor to powersave (example, commented out)
+# - match:
+#     mode: balance
+#   write:
+#     path: /sys/class/devfreq/devfreq*/governor
+#     value: powersave
+
+# Balance mode: TLP config fragment (example, commented out)
+# - match:
+#     mode: balance
+#   config:
+#     SATA_LINKPWR_ON_AC: medium_power
+#     WOL_DISABLE: Y
+
+# Portable device + balance/saving mode: run GPU policy program (example, commented out)
+# - match:
+#     mode: [balance, saving]
+#     feature: portable
+#   exec:
+#     command: /usr/libexec/deepin-power-control/gpu-policy --balanced

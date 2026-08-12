@@ -1,0 +1,24 @@
+# Build artifacts
+out/
+gopath/
+
+# Go test/build cache
+*.test
+*.out
+
+# debhelper build residues
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/deepin-power-control.debhelper.log
+debian/deepin-power-control.substvars
+debian/files
+debian/tmp/
+
+# Built package directory
+debian/deepin-power-control/
+
+# Editor/IDE
+*.swp
+*~
+.idea/
+.vscode/

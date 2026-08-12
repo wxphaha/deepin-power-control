@@ -1,0 +1,4 @@
+- match:
+    mode: [balance, saving]
+  config:
+    E: "1"

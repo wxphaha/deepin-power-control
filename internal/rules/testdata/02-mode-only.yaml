@@ -1,0 +1,4 @@
+- match:
+    mode: balance
+  config:
+    USB_AUTOSUSPEND: "2"

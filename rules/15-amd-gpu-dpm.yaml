@@ -1,0 +1,10 @@
+# AMD GPU DPM performance level override.
+# Applied when either PCI device 1002:6611 or 1002:699f is present.
+# Migrated from configs/override/15-amd-gpu-dpm@pci:*.conf (two files
+# merged into one rule via the parameter list in match.feature).
+- match:
+    feature:
+      pci: ["1002:6611", "1002:699f"]
+  config:
+    RADEON_DPM_PERF_LEVEL_ON_AC: high
+    RADEON_DPM_PERF_LEVEL_ON_BAT: high

@@ -68,7 +68,15 @@ install:
 		find ${DESTDIR}${SHARE_DIR}/configs -type f -exec chmod 644 {} +; \
 	fi
 
-	# 3. Install config.yaml
+	# 3. Install rule files to /usr/share/${PACKAGE}/rules
+	mkdir -p ${DESTDIR}${SHARE_DIR}/rules
+	if [ -d "rules" ]; then \
+		cp -rf rules/* ${DESTDIR}${SHARE_DIR}/rules/; \
+		find ${DESTDIR}${SHARE_DIR}/rules -type d -exec chmod 755 {} +; \
+		find ${DESTDIR}${SHARE_DIR}/rules -type f -exec chmod 644 {} +; \
+	fi
+
+	# 4. Install config.yaml
 	mkdir -p ${DESTDIR}${CONF_DIR}
 	install -m 644 configs/sample.yaml ${DESTDIR}${CONF_DIR}/config.yaml
 

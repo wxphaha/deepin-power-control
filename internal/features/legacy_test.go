@@ -1,4 +1,4 @@
-package config
+package features
 
 import (
 	"os"
@@ -10,9 +10,9 @@ func TestCheckPciDevice(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Save and restore original path
-	oldPath := pathPciDevices
-	defer func() { pathPciDevices = oldPath }()
-	pathPciDevices = tmpDir
+	oldPath := PathPciDevices
+	defer func() { PathPciDevices = oldPath }()
+	PathPciDevices = tmpDir
 
 	// Helper to create a mock PCI device directory
 	createMockDevice := func(dirName, vendor, device string) {
@@ -75,7 +75,7 @@ func TestCheckPciDevice(t *testing.T) {
 		},
 		{
 			name:     "No devices directory",
-			setup:    func() { pathPciDevices = "/non/existent/path" },
+			setup:    func() { PathPciDevices = "/non/existent/path" },
 			pciID:    "1002:699f",
 			expected: false,
 		},
@@ -84,8 +84,9 @@ func TestCheckPciDevice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset to tmpDir before each test (except "No devices directory")
-			pathPciDevices = tmpDir
+			PathPciDevices = tmpDir
 			tt.setup()
+			ResetPciCache()
 			if got := CheckPciDevice(tt.pciID); got != tt.expected {
 				t.Errorf("CheckPciDevice(%q) = %v, want %v", tt.pciID, got, tt.expected)
 			}
@@ -93,72 +94,24 @@ func TestCheckPciDevice(t *testing.T) {
 	}
 }
 
-func TestCheckEppSupport(t *testing.T) {
-	tmpDir := t.TempDir()
+// TestCheckPciDeviceOxPrefix verifies IDs written from sysfs values
+// (with "0x" prefix) match the scan cache (stored without prefix).
+func TestCheckPciDeviceOxPrefix(t *testing.T) {
+	oldPath := PathPciDevices
+	defer func() { PathPciDevices = oldPath }()
+	dir := t.TempDir()
+	PathPciDevices = dir
+	ResetPciCache()
 
-	// 1. Store original paths to restore them after the test
-	oldEpp := pathEppAvailable
-	oldIntel := pathIntelPstate
-	oldCpuInfo := pathCpuInfo
-	oldAmd := pathAmdPstate
-	oldAmdStatus := pathAmdStatus
+	devPath := filepath.Join(dir, "0000:01:00.0")
+	os.MkdirAll(devPath, 0755)
+	os.WriteFile(filepath.Join(devPath, "vendor"), []byte("0x1002\n"), 0644)
+	os.WriteFile(filepath.Join(devPath, "device"), []byte("0x699f\n"), 0644)
 
-	defer func() {
-		pathEppAvailable = oldEpp
-		pathIntelPstate = oldIntel
-		pathCpuInfo = oldCpuInfo
-		pathAmdPstate = oldAmd
-		pathAmdStatus = oldAmdStatus
-	}()
-
-	// 2. Define test cases
-	tests := []struct {
-		name     string
-		setup    func()
-		expected bool
-	}{
-		{
-			name: "Detect via Direct Sysfs",
-			setup: func() {
-				path := filepath.Join(tmpDir, "epp_pref")
-				os.MkdirAll(filepath.Dir(path), 0755)
-				os.Create(path)
-				pathEppAvailable = path // Mock the path
-			},
-			expected: true,
-		},
-		{
-			name: "Detect via AMD P-State",
-			setup: func() {
-				pathEppAvailable = "/non/existent"
-
-				amdDir := filepath.Join(tmpDir, "amd_pstate")
-				os.MkdirAll(amdDir, 0755)
-				pathAmdPstate = amdDir
-
-				statusFile := filepath.Join(amdDir, "status")
-				os.WriteFile(statusFile, []byte("active\n"), 0644)
-				pathAmdStatus = statusFile
-			},
-			expected: true,
-		},
-		{
-			name: "No Support Found",
-			setup: func() {
-				pathEppAvailable = "/non/existent"
-				pathIntelPstate = "/non/existent"
-				pathAmdPstate = "/non/existent"
-			},
-			expected: false,
-		},
+	if !CheckPciDevice("0x1002:0x699f") {
+		t.Fatal("expected 0x-prefixed ID to match")
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			if got := CheckEppSupport(); got != tt.expected {
-				t.Errorf("CheckEppSupport() = %v, want %v", got, tt.expected)
-			}
-		})
+	if !CheckPciDevice("1002:699f") {
+		t.Fatal("expected bare ID to match")
 	}
 }

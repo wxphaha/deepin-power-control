@@ -3,7 +3,6 @@ package monitor
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -239,7 +238,7 @@ func getValidTargets() []string {
 	for _, d := range global.AppConfig.WifiIgnoreDevices {
 		ignoreMap[d] = true
 	}
-	entries, err := ioutil.ReadDir("/sys/class/net")
+	entries, err := os.ReadDir("/sys/class/net")
 	if err != nil {
 		return nil
 	}

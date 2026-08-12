@@ -1,0 +1,16 @@
+- match:
+    feature: portable
+  config:
+    A: "1"
+- match:
+    feature: [portable, zhaoxin]
+  config:
+    B: "1"
+- match:
+    feature: {pci: ["1002:6611"]}
+  config:
+    C: "1"
+- match:
+    feature: {pci: ["1002:6611"], portable}
+  config:
+    D: "1"

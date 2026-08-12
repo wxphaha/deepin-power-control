@@ -10,6 +10,16 @@ import (
 
 // GetConfigFilesInDir finds .conf files and sorts them by depth then alphabet
 func GetConfigFilesInDir(baseDir string) ([]string, error) {
+	return GetFilesBySuffix(baseDir, ".conf")
+}
+
+// GetFilesBySuffix finds files with the given suffix and sorts them by the
+// full relative path (lexicographic). Directory names participate in the
+// ordering, so "20-intel/1.yaml" sorts between "15-xxx.yaml" and "99.yaml":
+// the numeric prefix is the priority everywhere, directories are just
+// categorization containers. A trailing convention: directories without a
+// numeric prefix (e.g. oem/) sort after all digit-prefixed entries.
+func GetFilesBySuffix(baseDir string, suffix string) ([]string, error) {
 	var files []string
 
 	// WalkDir recursively finds all files in the directory tree
@@ -17,8 +27,8 @@ func GetConfigFilesInDir(baseDir string) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		// Filter: only include regular files with the .conf extension
-		if !info.IsDir() && strings.HasSuffix(info.Name(), ".conf") {
+		// Filter: only include regular files with the given suffix
+		if !info.IsDir() && strings.HasSuffix(info.Name(), suffix) {
 			files = append(files, path)
 		}
 		return nil
@@ -28,26 +38,11 @@ func GetConfigFilesInDir(baseDir string) ([]string, error) {
 		return nil, err
 	}
 
-	// Sort files based on directory depth and then alphabetical order
+	// Sort by the full relative path: the numeric prefix decides priority
+	// globally (directories included), later entries override earlier ones.
 	sort.Slice(files, func(i, j int) bool {
-		// Use the indices i and j to get the actual paths
-		pathI := files[i]
-		pathJ := files[j]
-
-		// Get relative paths to calculate depth independent of the absolute root
-		relI, _ := filepath.Rel(baseDir, pathI)
-		relJ, _ := filepath.Rel(baseDir, pathJ)
-
-		// Count the number of path separators to determine nesting level
-		depthI := strings.Count(relI, string(os.PathSeparator))
-		depthJ := strings.Count(relJ, string(os.PathSeparator))
-
-		// Priority 1: Shorter depth (root files) comes first
-		if depthI != depthJ {
-			return depthI < depthJ
-		}
-
-		// Priority 2: Same depth, sort alphabetically by relative path
+		relI, _ := filepath.Rel(baseDir, files[i])
+		relJ, _ := filepath.Rel(baseDir, files[j])
 		return relI < relJ
 	})
 

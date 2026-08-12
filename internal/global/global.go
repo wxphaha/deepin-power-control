@@ -25,8 +25,10 @@ const (
 var (
 	PidFile = "/run/deepin-power-control.pid"
 	// Paths for TLP configuration management
-	RawConfigDir        = "/usr/share/deepin-power-control/configs"
-	TlpConfigDir        = "/etc/tlp.d"
+	RawConfigDir = "/usr/share/deepin-power-control/configs"
+	TlpConfigDir = "/etc/tlp.d"
+	// Path for rule-based actions (sysfs writes / config generation / program calls)
+	RulesConfigDir      = "/usr/share/deepin-power-control/rules"
 	TargetTlpFilePrefix = "30_deepin-power-control"
 )
 

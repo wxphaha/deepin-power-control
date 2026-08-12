@@ -1,0 +1,13 @@
+- match:
+    mode: balance
+  config:
+    F: "1"
+- match:
+    mode: balance
+  write:
+    path: /sys/class/devfreq/devfreq*/governor
+    value: powersave
+- match:
+    mode: balance
+  exec:
+    command: /bin/true

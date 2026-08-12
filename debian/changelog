@@ -1,3 +1,19 @@
+deepin-power-control (2.0.5) unstable; urgency=medium
+
+  * Add rule-based action framework (udev-like): YAML rules under
+    /usr/share/deepin-power-control/rules/ with match conditions
+    (mode, feature) and three action types: write (sysfs, glob +
+    read-back verification), exec (argv, 60s timeout) and config
+    (TLP config fragment merged after filesystem configs, so rules
+    override base configs).
+  * Make hardware feature detection configuration-driven: features
+    are declared in embedded features.yaml (file_value_in,
+    file_contains, path_exists, dir_exists, any/all); features that
+    cannot be expressed declaratively fall back to the legacy code
+    registry (e.g. dynamic @pci: tag).
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Wed, 12 Aug 2026 14:34:28 +0800
+
 deepin-power-control (2.0.4) unstable; urgency=medium
 
   *Add dynamic @pci: feature tag for config files (e.g. @pci:1002:6611) 

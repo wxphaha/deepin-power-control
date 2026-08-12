@@ -61,7 +61,10 @@ var setCmd = &cobra.Command{
 	Short: "Set power mode",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			return fmt.Errorf("missing mode! Valid modes are: performance, balance, saving, lowbat")
+			return fmt.Errorf("missing mode! Valid modes are: %s", strings.Join(config.ValidModes, ", "))
+		}
+		if !config.IsValidMode(args[0]) {
+			return fmt.Errorf("invalid mode %q! Valid modes are: %s", args[0], strings.Join(config.ValidModes, ", "))
 		}
 		return nil
 	},
