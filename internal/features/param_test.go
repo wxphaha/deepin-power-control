@@ -27,9 +27,10 @@ func TestPciParamViaDeclaration(t *testing.T) {
 	if e.Enabled("pci:10de:1234") {
 		t.Fatal("expected no match for absent device")
 	}
-	// Code registry is empty; ensure it is not consulted for pci
-	if len(FeatureChecks) != 0 {
-		t.Fatalf("expected empty code registry, got %v", FeatureChecks)
+	// pci must not be resolved via the code registry (it is declared in
+	// features.yaml); the registry only holds code-backed features.
+	if _, ok := FeatureChecks["pci"]; ok {
+		t.Fatalf("pci should not be in the code registry: %v", FeatureChecks)
 	}
 }
 

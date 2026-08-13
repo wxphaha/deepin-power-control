@@ -115,3 +115,60 @@ func normalizeHex(b []byte) string {
 	s := strings.ToLower(strings.TrimSpace(string(b)))
 	return strings.TrimPrefix(s, "0x")
 }
+
+// devIdleEnabled is the in-process switch state set from the command-line
+// flag (--dev-idle on the set command). Kept in memory only: the process
+// is short-lived (one mode switch), so the state disappears on exit and
+// can never go stale or be left behind like a file would.
+var devIdleEnabled bool
+
+// SetDevIdleEnabled records whether the user enabled device idle power
+// saving for this invocation (called by the set command when --dev-idle
+// is given).
+func SetDevIdleEnabled(v bool) {
+	devIdleEnabled = v
+}
+
+// PathPowerSupply is the sysfs power supply directory. A variable for tests.
+var PathPowerSupply = "/sys/class/power_supply"
+
+// checkDevIdleOn reports whether the device idle power saving switch is
+// enabled AND the machine is running on battery. The switch state comes
+// from the in-process flag (--dev-idle); battery detection follows TLP's
+// get_sys_power_supply: scan /sys/class/power_supply for a Mains (AC
+// charger) device; online=0 means on battery.
+func checkDevIdleOn(string) bool {
+	if !devIdleEnabled {
+		return false
+	}
+	return onBattery()
+}
+
+// onBattery scans power supply devices for an AC charger (type=Mains)
+// and reports whether it is offline (i.e. running on battery).
+func onBattery() bool {
+	entries, err := os.ReadDir(PathPowerSupply)
+	if err != nil {
+		global.Warn("Failed to read power supply directory: %v", err)
+		return false
+	}
+
+	for _, entry := range entries {
+		base := filepath.Join(PathPowerSupply, entry.Name())
+		psType, err := os.ReadFile(filepath.Join(base, "type"))
+		if err != nil {
+			continue
+		}
+		if strings.TrimSpace(string(psType)) != "Mains" {
+			continue
+		}
+		online, err := os.ReadFile(filepath.Join(base, "online"))
+		if err != nil {
+			continue
+		}
+		// Mains online=0: AC charger present but offline -> on battery.
+		return strings.TrimSpace(string(online)) == "0"
+	}
+	// No AC charger found: assume desktop with no battery -> not on battery.
+	return false
+}

@@ -1,0 +1,21 @@
+# 设备空闲省电（用户开关 + 电池时生效）
+# 由控制中心"设备空闲省电"开关控制：开关开启时写状态文件，
+# 本规则仅在 状态文件存在 且 使用电池 时匹配（feature: dev-idle-on）。
+# 仅覆盖 ON_BAT 侧（AC 保持 base/模式原值）；base 已声明还原值，
+# 开关关闭或插电后自动回落。
+# 优先级 11：高于模式配置(10)，低于 OEM 定制(15+)，OEM 可覆盖。
+- match:
+    feature: dev-idle-on
+  config:
+    # USB 设备自动挂起（全局参数，靠 feature 电池检测限定电池生效）
+    USB_AUTOSUSPEND: "1"
+    # 排除蓝牙设备（防止挂起导致蓝牙掉线）
+    USB_EXCLUDE_BTUSB: "1"
+    # PCIe 设备 Runtime PM：电池时按需开启（base=on 还原）
+    RUNTIME_PM_ON_BAT: auto
+    # PCIe ASPM 链路省电（base=default 还原）
+    PCIE_ASPM_ON_BAT: powersave
+    # SATA/AHCI Runtime PM：电池时按需开启（base=on 还原），TIMEOUT 随之生效
+    AHCI_RUNTIME_PM_ON_BAT: auto
+    # SATA 链路电源管理（base=max_performance 还原）
+    SATA_LINKPWR_ON_BAT: med_power_with_dipm

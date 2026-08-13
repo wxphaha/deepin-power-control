@@ -7,6 +7,7 @@ import (
 
 	"deepin-power-control/internal/config"
 	"deepin-power-control/internal/debugger"
+	"deepin-power-control/internal/features"
 	"deepin-power-control/internal/global"
 	"deepin-power-control/internal/monitor"
 	"deepin-power-control/internal/utils"
@@ -19,6 +20,7 @@ var (
 	verboseMode bool
 	configPath  string
 	logToFile   bool
+	devIdle     bool
 
 	debugTarget string
 	debugExpect string
@@ -78,6 +80,7 @@ var setCmd = &cobra.Command{
 		defer utils.UnlockTlp()
 
 		mode := args[0]
+		features.SetDevIdleEnabled(devIdle)
 		global.Info("Applying power mode: %s", mode)
 		if err := config.ApplyMode(mode); err != nil {
 			return fmt.Errorf("failed to apply mode: %w", err)
@@ -204,6 +207,8 @@ func init() {
 
 	debugCmd.PersistentFlags().StringVar(&debugTarget, "target", "", "Path to sysfs file (e.g. /sys/bus/pci/...)")
 	debugCmd.PersistentFlags().StringVar(&debugExpect, "expect", "", "Expected value in the target file (e.g. 'auto')")
+
+	setCmd.Flags().BoolVar(&devIdle, "dev-idle", false, "Enable device idle power saving (effective on battery)")
 
 	rootCmd.AddCommand(setCmd, initStartCmd, debugCmd)
 	debugCmd.AddCommand(debugInitCmd, debugResumeCmd, debugAbortCmd)

@@ -103,7 +103,9 @@ func validateDef(def *Def) error {
 // detector is declared in features.yaml. Add a code detector here only
 // when a detection truly cannot be declared; the filename parsing code
 // never changes.
-var FeatureChecks = map[string]func(param string) bool{}
+var FeatureChecks = map[string]func(param string) bool{
+	"dev-idle-on": checkDevIdleOn,
+}
 
 // Engine evaluates declared features, with the code registry above as an
 // implicit fallback for detection that cannot be expressed declaratively.

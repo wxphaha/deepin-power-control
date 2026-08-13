@@ -115,3 +115,43 @@ func TestCheckPciDeviceOxPrefix(t *testing.T) {
 		t.Fatal("expected bare ID to match")
 	}
 }
+
+// TestDevIdleOn verifies the device-idle feature: enabled only when the
+// in-process switch flag is set AND the machine is on battery.
+func TestDevIdleOn(t *testing.T) {
+	oldPS := PathPowerSupply
+	defer func() { PathPowerSupply = oldPS }()
+	defer SetDevIdleEnabled(false)
+
+	// mock power supply: AC charger online=1 (not on battery)
+	psDir := t.TempDir()
+	ac := filepath.Join(psDir, "AC0")
+	os.MkdirAll(ac, 0755)
+	os.WriteFile(filepath.Join(ac, "type"), []byte("Mains\n"), 0644)
+	os.WriteFile(filepath.Join(ac, "online"), []byte("1\n"), 0644)
+	PathPowerSupply = psDir
+
+	// flag off -> disabled even on battery
+	SetDevIdleEnabled(false)
+	if checkDevIdleOn("") {
+		t.Fatal("expected disabled without flag")
+	}
+
+	// flag on + AC online -> disabled (not on battery)
+	SetDevIdleEnabled(true)
+	if checkDevIdleOn("") {
+		t.Fatal("expected disabled on AC")
+	}
+
+	// flag on + AC offline -> enabled (on battery)
+	os.WriteFile(filepath.Join(ac, "online"), []byte("0\n"), 0644)
+	if !checkDevIdleOn("") {
+		t.Fatal("expected enabled on battery with flag")
+	}
+
+	// flag on + no AC charger (desktop) -> disabled
+	os.RemoveAll(filepath.Join(psDir, "AC0"))
+	if checkDevIdleOn("") {
+		t.Fatal("expected disabled without AC charger")
+	}
+}

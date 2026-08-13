@@ -1,3 +1,22 @@
+deepin-power-control (2.0.6) unstable; urgency=medium
+
+  * Add device idle power saving option (battery only): dde passes the
+    user switch via --dev-idle on every set invocation; the in-process
+    feature dev-idle-on (flag + battery detection) gates rules/11-dev-idle.yaml
+    which applies battery-side saving params (USB autosuspend with
+    bluetooth excluded, PCIe runtime PM auto, PCIe ASPM powersave,
+    AHCI runtime PM auto, SATA link power med_power_with_dipm). No
+    state file is used, so nothing can go stale or be left behind.
+  * Base config gains explicit restore values (CPU boost/HWP on,
+    PLATFORM_PROFILE balanced, SATA link max_performance) so switching
+    modes or turning the switch off always reverts correctly: TLP
+    applies no default for unconfigured parameters.
+  * Mode configs: performance uses PLATFORM_PROFILE=performance;
+    saving/lowbat disable CPU boost, HWP dynamic boost and use
+    PLATFORM_PROFILE=low-power.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Fri, 14 Aug 2026 11:47:46 +0800
+
 deepin-power-control (2.0.5) unstable; urgency=medium
 
   * Add rule-based action framework (udev-like): YAML rules under
