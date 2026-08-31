@@ -135,8 +135,7 @@ var PathPowerSupply = "/sys/class/power_supply"
 // checkDevIdleOn reports whether the device idle power saving switch is
 // enabled AND the machine is running on battery. The switch state comes
 // from the in-process flag (--dev-idle); battery detection follows TLP's
-// get_sys_power_supply: scan /sys/class/power_supply for a Mains (AC
-// charger) device; online=0 means on battery.
+// get_sys_power_supply semantics.
 func checkDevIdleOn(string) bool {
 	if !devIdleEnabled {
 		return false
@@ -144,8 +143,11 @@ func checkDevIdleOn(string) bool {
 	return onBattery()
 }
 
-// onBattery scans power supply devices for an AC charger (type=Mains)
-// and reports whether it is offline (i.e. running on battery).
+// onBattery reports whether the machine is running on battery, following
+// TLP's get_sys_power_supply decision table:
+//   - any Mains/USB charger online       -> not on battery (AC)
+//   - charger(s) present, all offline    -> on battery (ignores battery status)
+//   - no charger -> on battery only when a Battery reports Discharging
 func onBattery() bool {
 	entries, err := os.ReadDir(PathPowerSupply)
 	if err != nil {
@@ -153,22 +155,32 @@ func onBattery() bool {
 		return false
 	}
 
+	chargerOffline := false
+	hasDischarging := false
 	for _, entry := range entries {
 		base := filepath.Join(PathPowerSupply, entry.Name())
 		psType, err := os.ReadFile(filepath.Join(base, "type"))
 		if err != nil {
 			continue
 		}
-		if strings.TrimSpace(string(psType)) != "Mains" {
-			continue
+		switch strings.TrimSpace(string(psType)) {
+		case "Mains", "USB": // AC chargers (USB-C PD included)
+			online, err := os.ReadFile(filepath.Join(base, "online"))
+			if err != nil {
+				// unreadable status: treat as offline (conservative, like TLP)
+				chargerOffline = true
+				continue
+			}
+			if strings.TrimSpace(string(online)) == "1" {
+				return false // charger online -> AC
+			}
+			chargerOffline = true
+		case "Battery":
+			status, err := os.ReadFile(filepath.Join(base, "status"))
+			if err == nil && strings.TrimSpace(string(status)) == "Discharging" {
+				hasDischarging = true
+			}
 		}
-		online, err := os.ReadFile(filepath.Join(base, "online"))
-		if err != nil {
-			continue
-		}
-		// Mains online=0: AC charger present but offline -> on battery.
-		return strings.TrimSpace(string(online)) == "0"
 	}
-	// No AC charger found: assume desktop with no battery -> not on battery.
-	return false
+	return chargerOffline || hasDischarging
 }

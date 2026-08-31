@@ -1,3 +1,12 @@
+deepin-power-control (2.0.7) unstable; urgency=medium
+
+  * Fix onBattery() to follow TLP's get_sys_power_supply semantics:
+    count USB-C (type=USB) chargers as AC; charger present but offline
+    means battery regardless of battery status; without any charger fall
+    back to a Discharging battery.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Mon, 31 Aug 2026 15:30:00 +0800
+
 deepin-power-control (2.0.6) unstable; urgency=medium
 
   * Add device idle power saving option (battery only): dde passes the

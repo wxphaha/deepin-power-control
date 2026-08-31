@@ -155,3 +155,77 @@ func TestDevIdleOn(t *testing.T) {
 		t.Fatal("expected disabled without AC charger")
 	}
 }
+
+// TestOnBatteryTLPSemantics covers the TLP-derived decision table:
+// USB-C (type=USB) chargers count as AC; charger present but offline
+// means battery regardless of battery status; without any charger the
+// decision falls back to a Discharging battery.
+func TestOnBatteryTLPSemantics(t *testing.T) {
+	oldPS := PathPowerSupply
+	defer func() { PathPowerSupply = oldPS }()
+
+	mkdir := func(psDir, name, typeVal string) string {
+		p := filepath.Join(psDir, name)
+		if err := os.MkdirAll(p, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(p, "type"), []byte(typeVal+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	write := func(p, content string) {
+		if err := os.WriteFile(p, []byte(content+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// 1) USB-C PD charger online -> not on battery
+	psDir := t.TempDir()
+	usb := mkdir(psDir, "ucsi_source_psy_usb", "USB")
+	write(filepath.Join(usb, "online"), "1")
+	PathPowerSupply = psDir
+	if onBattery() {
+		t.Fatal("expected not on battery: USB charger online")
+	}
+
+	// 2) USB-C PD charger offline + battery discharging -> on battery
+	write(filepath.Join(usb, "online"), "0")
+	bat := mkdir(psDir, "BAT0", "Battery")
+	write(filepath.Join(bat, "status"), "Discharging")
+	if !onBattery() {
+		t.Fatal("expected on battery: USB offline, battery discharging")
+	}
+
+	// 3) no charger at all + battery not discharging -> not on battery
+	if err := os.RemoveAll(usb); err != nil {
+		t.Fatal(err)
+	}
+	write(filepath.Join(bat, "status"), "Full")
+	if onBattery() {
+		t.Fatal("expected not on battery: no charger, battery Full")
+	}
+
+	// 4) no charger at all + battery discharging -> on battery
+	write(filepath.Join(bat, "status"), "Discharging")
+	if !onBattery() {
+		t.Fatal("expected on battery: no charger, battery discharging")
+	}
+
+	// 5) charger offline but battery Full -> still on battery (TLP semantics)
+	psDir2 := t.TempDir()
+	mkdir(psDir2, "AC", "Mains")
+	write(filepath.Join(psDir2, "AC", "online"), "0")
+	bat2 := mkdir(psDir2, "BAT0", "Battery")
+	write(filepath.Join(bat2, "status"), "Full")
+	PathPowerSupply = psDir2
+	if !onBattery() {
+		t.Fatal("expected on battery: Mains offline even if battery Full")
+	}
+
+	// 6) desktop: nothing at all -> not on battery
+	PathPowerSupply = t.TempDir()
+	if onBattery() {
+		t.Fatal("expected not on battery: no power supplies")
+	}
+}
