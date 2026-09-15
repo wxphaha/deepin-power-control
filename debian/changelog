@@ -1,3 +1,15 @@
+deepin-power-control (2.0.8) unstable; urgency=medium
+
+  * Revert the device-idle base/mode config changes from c2907d7
+    (deferred): drop CPU_BOOST/HWP_DYN_BOOST restore values and
+    PLATFORM_PROFILE keys from configs/00-deepin-power-control-base.conf,
+    and drop PLATFORM_PROFILE/CPU_BOOST/HWP_DYN_BOOST lines from
+    configs/10-deepin-power-control-mode.conf (performance/saving/lowbat)
+    until the device-idle feature ships. The dev-idle rules/feature code
+    stays (off by default, requires --dev-idle + battery).
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Tue, 15 Sep 2026 21:00:00 +0800
+
 deepin-power-control (2.0.7) unstable; urgency=medium
 
   * Fix onBattery() to follow TLP's get_sys_power_supply semantics:
