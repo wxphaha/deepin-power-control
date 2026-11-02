@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package features
 
 // Code detectors backing parameterized declarations. The pci_vendor_device

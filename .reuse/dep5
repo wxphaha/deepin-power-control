@@ -1,0 +1,20 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: deepin-power-control
+Upstream-Contact: deepin development team <developer@deepin.org>
+Source: https://github.com/linuxdeepin/deepin-power-control
+
+Files: *
+Copyright: 2026 UnionTech Software Technology Co., Ltd.
+License: GPL-3.0-or-later
+
+Files: LICENSES/*
+Copyright: 2026 UnionTech Software Technology Co., Ltd.
+License: GPL-3.0-or-later
+
+Files: docs/third-party.md
+Copyright: 2026 UnionTech Software Technology Co., Ltd.
+License: Apache-2.0
+
+Files: docs/runtime-dependencies.md
+Copyright: 2026 UnionTech Software Technology Co., Ltd.
+License: GPL-2.0-or-later

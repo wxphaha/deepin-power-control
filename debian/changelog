@@ -1,3 +1,13 @@
+deepin-power-control (2.0.9) unstable; urgency=medium
+
+  * Add SPDX license headers (GPL-3.0-or-later) to all Go source files
+  * Add REUSE compliance configuration (.reuse/dep5) and the missing
+    GPL-2.0-or-later license text
+  * Rewrite README.md and add README.zh_CN.md for the open source release
+  * Add docs describing third-party components and runtime dependencies
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Mon, 02 Nov 2026 15:05:05 +0800
+
 deepin-power-control (2.0.8) unstable; urgency=medium
 
   * Revert the device-idle base/mode config changes from c2907d7
