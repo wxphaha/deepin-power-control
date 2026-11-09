@@ -1,3 +1,13 @@
+deepin-power-control (2.0.10) unstable; urgency=medium
+
+  * Force the runtime PM of the AMDI0010 platform I2C controller (hosting
+    the i2c-hid touchpad on AMD laptops) to "on" via RUNTIME_PM_DISABLE
+    in the base config, to avoid touchpad unresponsiveness after suspend
+    on some AMD laptops. Depends on the deepin TLP extension accepting
+    platform device names in RUNTIME_PM_ENABLE/DISABLE.
+
+ -- xinpeng.wang <wangxinpeng@uniontech.com>  Mon, 09 Nov 2026 17:39:40 +0800
+
 deepin-power-control (2.0.9) unstable; urgency=medium
 
   * Add SPDX license headers (GPL-3.0-or-later) to all Go source files

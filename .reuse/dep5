@@ -7,14 +7,10 @@ Files: *
 Copyright: 2026 UnionTech Software Technology Co., Ltd.
 License: GPL-3.0-or-later
 
-Files: LICENSES/*
+Files: docs/third-party.md
 Copyright: 2026 UnionTech Software Technology Co., Ltd.
 License: GPL-3.0-or-later
 
-Files: docs/third-party.md
-Copyright: 2026 UnionTech Software Technology Co., Ltd.
-License: Apache-2.0
-
 Files: docs/runtime-dependencies.md
 Copyright: 2026 UnionTech Software Technology Co., Ltd.
-License: GPL-2.0-or-later
+License: GPL-3.0-or-later
